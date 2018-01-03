@@ -1,0 +1,99 @@
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:context="http://www.springframework.org/schema/context" xmlns:tx="http://www.springframework.org/schema/tx"
+       xmlns:mongo="http://www.springframework.org/schema/data/mongo"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans
+            http://www.springframework.org/schema/beans/spring-beans.xsd
+            http://www.springframework.org/schema/context
+            http://www.springframework.org/schema/context/spring-context.xsd
+            http://www.springframework.org/schema/tx
+            http://www.springframework.org/schema/tx/spring-tx-3.1.xsd http://www.springframework.org/schema/data/mongo http://www.springframework.org/schema/data/mongo/spring-mongo.xsd">
+
+    <context:property-placeholder location="classpath:ssp.properties" />
+    <context:annotation-config/>
+    <context:component-scan base-package="com.ssp"/>
+    <tx:annotation-driven proxy-target-class="true" transaction-manager="transactionManager"/>
+
+    <bean id="properties" class="org.springframework.beans.factory.config.PropertiesFactoryBean">
+        <property name="locations">
+            <list>
+                <value>classpath:ssp.properties</value>
+            </list>
+        </property>
+    </bean>
+
+    <bean id="dataSource" class="org.apache.commons.dbcp.BasicDataSource" destroy-method="close">
+        <property name="driverClassName" value="${jdbc.driverClassName}"/>
+        <property name="url" value="${jdbc.url}"/>
+        <property name="username" value="${jdbc.username}"/>
+        <property name="password" value="${jdbc.password}"/>
+        <property name="maxActive" value="1000"/>
+        <property name="maxWait" value="1000"/>
+        <property name="poolPreparedStatements" value="true"/>
+        <property name="defaultAutoCommit" value="true"/>
+        <property name="validationQuery" value="select 1"/>
+        <property name="" value="select 1"/>
+    </bean>
+
+
+    <bean id="sessionFactory" class="org.springframework.orm.hibernate4.LocalSessionFactoryBean">
+        <property name="dataSource" ref="dataSource"/>
+        <property name="hibernateProperties">
+            <props>
+                <prop key="hibernate.hbm2ddl.auto">${hibernate.hbm2ddl.auto}</prop>
+                <prop key="hibernate.dialect">${hibernate.dialect}</prop>
+                <prop key="hibernate.show_sql">${hibernate.show_sql}</prop>
+                <prop key="show_sql">${show_sql}</prop>
+                <prop key="hibernate.format_sql">${hibernate.format_sql}</prop>
+                <prop key="hibernate.jdbc.lob.non_contextual_creation">false</prop>
+                <prop key="hibernate.connection.useUnicode">${hibernate.connection.useUnicode}</prop>
+                <prop key="hibernate.connection.characterEncoding">${hibernate.connection.characterEncoding}</prop>
+                <prop key="hibernate.connection.charSet">${hibernate.connection.charSet}</prop>
+                <prop key="hibernate.connection.defaultNChar">${hibernate.connection.defaultNChar}</prop>
+                <prop key="hibernate.generate_statistics">${hibernate.generate_statistics}</prop>
+                <!-- enable second level cache and query cache -->
+                <prop key="hibernate.cache.region.factory_class">${hibernate.cache.factory}</prop>
+                <prop key="hibernate.cache.use_second_level_cache">${hibernate.cache.second.level}</prop>
+                <prop key="hibernate.cache.use_query_cache">${hibernate.cache.query}</prop>
+                <prop key="hibernate.cache.ehcache.native_client_address">${hibernate.ehcache.native.client.address}</prop>
+                <prop key="net.sf.ehcache.configurationResourceName">${hibernate.eh.cache.resource.name}</prop>
+
+                <prop key="hibernate.c3p0.min_size">50</prop>
+                <prop key="hibernate.c3p0.max_size">200</prop>
+                <prop key="hibernate.c3p0.timeout">500</prop>
+                <prop key="hibernate.c3p0.max_statements">50</prop>
+                <prop key="hibernate.c3p0.idle_test_period">3000</prop>
+                <!--<prop key="hibernate.dbcp.initialSize">50</prop>
+                <prop key="hibernate.dbcp.maxActive">200</prop>
+                <prop key="hibernate.dbcp.maxIdle">50</prop>
+                <prop key="hibernate.dbcp.minIdle">10</prop>-->
+
+            </props>
+        </property>
+        <property name="packagesToScan" value="com.ssp.api.entity.jpa"/>
+    </bean>
+
+    <bean id="transactionManager" class="org.springframework.orm.hibernate4.HibernateTransactionManager">
+        <property name="sessionFactory" ref="sessionFactory" />
+    </bean>
+
+    <bean id="dspExecutor" class="org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor" destroy-method="destroy">
+        <property name="corePoolSize" value="${core.pool.size}"/>
+        <property name="maxPoolSize" value="${max.pool.size}"/>
+        <property name="queueCapacity" value="${queue.capacity}"/>
+        <property name="waitForTasksToCompleteOnShutdown" value="true"/>
+    </bean>
+
+
+    <bean id="dspNotifyExecutor" class="org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor" destroy-method="destroy">
+        <property name="corePoolSize" value="${core.pool.size}"/>
+        <property name="maxPoolSize" value="${max.pool.size}"/>
+        <property name="queueCapacity" value="${queue.capacity}"/>
+        <property name="waitForTasksToCompleteOnShutdown" value="true"/>
+    </bean>
+
+    <import resource="spring-mongodb-config.xml"/>
+    <import resource="wurfl-ctx.xml"/>
+    <import resource="maxmind-ctx.xml"/>
+    <!--<import resource="spring-cache.xml"/>-->
+</beans>
