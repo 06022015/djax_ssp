@@ -7,6 +7,7 @@ import com.ssp.api.dto.DSPResponse;
 import com.ssp.api.entity.jpa.DSPInfo;
 import com.ssp.api.exception.QPSLimitOverFlowException;
 import com.ssp.api.exception.SSPURLException;
+import com.ssp.core.util.RTBRequest;
 import com.ssp.core.util.SSPBean;
 import org.apache.commons.lang.StringUtils;
 import org.json.simple.JSONObject;
@@ -33,12 +34,14 @@ public class DSPTask implements Callable<DSPResponse> {
     private DSPInfo dspInfo;
     private String content;
     private BidRequest bidRequest;
+    private RTBRequest rtbRequest;
 
-    public DSPTask(SSPBean sspBean, BidRequest bidRequest, DSPInfo dspInfo, String content){
+    public DSPTask(SSPBean sspBean, BidRequest bidRequest, DSPInfo dspInfo, String content, RTBRequest rtbRequest){
         this.sspBean = sspBean;
         this.dspInfo = dspInfo;
         this.content = content;
         this.bidRequest = bidRequest;
+        this.rtbRequest = rtbRequest;
     }
 
     public DSPResponse call() throws Exception  {
@@ -55,8 +58,8 @@ public class DSPTask implements Callable<DSPResponse> {
             code = response.getCode();
             if(response.getCode() == HttpStatus.OK.value() && StringUtils.isNotEmpty(response.getResponse())){
                 try{
-                    OpenRtb.BidResponse.Builder responseBuilder = this.sspBean.getRtbGenerator().getBidResponse(response.getResponse());
-                    if(this.sspBean.getRtbGenerator().isValid(this.bidRequest, responseBuilder)
+                    OpenRtb.BidResponse.Builder responseBuilder = this.rtbRequest.getBidResponse(response.getResponse());
+                    if(this.rtbRequest.isValid(this.bidRequest, responseBuilder)
                             && isValidCat(this.bidRequest, responseBuilder)){
                         BidData bidData = new BidData();
                         bidData.setAdm(responseBuilder.getSeatbid(0).getBid(0).getAdm());

@@ -43,12 +43,6 @@ public class SSPBean {
     @Autowired
     private Properties properties;
 
-    private RTBGenerator rtbGenerator;
-
-
-    public SSPBean() {
-        rtbGenerator = new RTBGenerator();
-    }
 
     public JPARepository getJpaRepository() {
         return jpaRepository;
@@ -76,10 +70,6 @@ public class SSPBean {
 
     public ThreadPoolTaskExecutor getDspNotifyExecutor() {
         return dspNotifyExecutor;
-    }
-
-    public RTBGenerator getRtbGenerator() {
-        return rtbGenerator;
     }
 
     public Properties getProperties() {

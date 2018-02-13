@@ -13,7 +13,8 @@ import com.ssp.api.exception.SSPException;
 import com.ssp.api.service.SSPService;
 import com.ssp.core.task.DSPNotifyTask;
 import com.ssp.core.task.DSPTask;
-import com.ssp.core.util.DSPQPSCounter;
+import com.ssp.core.util.RTBRequest;
+import com.ssp.core.util.RTBRequestFactory;
 import com.ssp.core.util.SSPBean;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
@@ -27,6 +28,7 @@ import org.springframework.stereotype.Service;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.*;
@@ -48,6 +50,15 @@ public class SSPServiceImpl implements SSPService{
 
     private static Logger logger = LoggerFactory.getLogger(SSPServiceImpl.class);
 
+    private Map<String,String> defaultProp;
+
+    private RTBRequestFactory rtbRequestFactory;
+
+    public SSPServiceImpl() {
+        initDefaultProp();
+        this.rtbRequestFactory = new RTBRequestFactory();
+    }
+
     @Autowired
     private SSPBean sspBean;
 
@@ -61,8 +72,10 @@ public class SSPServiceImpl implements SSPService{
         logger.debug("Geo location:= "+ (null != location?location.toString():location));
         parameter.put(Constant.LMT, sspBean.getProperties().getProperty("ssp.lmt"));
         parameter.put(Constant.CURRENCY, sspBean.getProperties().getProperty("ssp.currency"));
-        BidRequest bidRequest = sspBean.getRtbGenerator().generate(adBlockInfo,location, parameter);
-        String requestContent = sspBean.getRtbGenerator().getBidAsString(bidRequest);
+        parameter.putAll(defaultProp);
+        RTBRequest rtbRequest = rtbRequestFactory.rtb(Integer.parseInt(adBlockInfo.getAdFormat()),Integer.parseInt(adBlockInfo.getAppType()));
+        BidRequest bidRequest = rtbRequest.generate(adBlockInfo,location, parameter);
+        String requestContent = rtbRequest.getBidAsString(bidRequest);
         logger.debug("Bid request:= "+requestContent);
         //this.sspBean.getMongoRepository().saveRTBJSON(requestContent);
         //logger.debug("rtb saved in mongo ");
@@ -75,7 +88,7 @@ public class SSPServiceImpl implements SSPService{
         for(DSPInfo dspInfo : dspInfos){
             dspInfo.setMaxResponseTime(maxResponseTime);
             try{
-                DSPTask dspRequestTask = new DSPTask(sspBean,bidRequest, dspInfo, requestContent);
+                DSPTask dspRequestTask = new DSPTask(sspBean,bidRequest, dspInfo, requestContent, rtbRequest);
                 Future<DSPResponse> task = sspBean.getDspExecutor().submit(dspRequestTask);
                 taskList.add(task);
                 //dspIds.add(dspInfo.getUserId());
@@ -173,5 +186,14 @@ public class SSPServiceImpl implements SSPService{
             //throw new SSPException("Not able to read location from maxmind",e,HttpStatus.BAD_REQUEST.value());
         }
         return null;
+    }
+
+    private void initDefaultProp(){
+        this.defaultProp = new HashMap<String, String>();
+        this.defaultProp.put("video.min.bitrate", sspBean.getProperties().getProperty("video.min.bitrate"));
+        this.defaultProp.put("video.max.bitrate", sspBean.getProperties().getProperty("video.max.bitrate"));
+        this.defaultProp.put("video.max.extended", sspBean.getProperties().getProperty("video.max.extended"));
+        this.defaultProp.put("video.min.duration", sspBean.getProperties().getProperty("video.min.duration"));
+        this.defaultProp.put("video.max.duration", sspBean.getProperties().getProperty("video.max.duration"));
     }
 }
